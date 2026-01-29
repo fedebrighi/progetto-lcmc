@@ -114,6 +114,97 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 	}
 
 	@Override
+	public String visitNode(LessEqualNode n) {
+		if (print) printNode(n);
+		String l1 = freshLabel();
+		String l2 = freshLabel();
+		return nlJoin(
+				visit(n.left),
+				visit(n.right),
+				"bleq "+l1,
+				"push 0",
+				"b "+l2,
+				l1+":",
+				"push 1",
+				l2+":"
+		);
+	}
+
+	@Override
+	public String visitNode(GreaterEqualNode n) {
+		if (print) printNode(n);
+		String l1 = freshLabel();
+		String l2 = freshLabel();
+		return nlJoin(
+				visit(n.right),
+				visit(n.left),
+				"bleq "+l1,
+				"push 0",
+				"b "+l2,
+				l1+":",
+				"push 1",
+				l2+":"
+		);
+	}
+
+	@Override
+	public String visitNode(AndNode n) {
+		if (print) printNode(n);
+		String lFalse = freshLabel();
+		String lEnd = freshLabel();
+		return nlJoin(
+				visit(n.left),
+				"push 0",
+				"beq "+lFalse,
+				visit(n.right),
+				"push 0",
+				"beq "+lFalse,
+				"push 1",
+				"b "+lEnd,
+				lFalse+":",
+				"push 0",
+				lEnd+":"
+		);
+	}
+
+	@Override
+	public String visitNode(OrNode n) {
+		if (print) printNode(n);
+		String lTrue = freshLabel();
+		String lEnd = freshLabel();
+		return nlJoin(
+				visit(n.left),
+				"push 1",
+				"beq "+lTrue,
+				visit(n.right),
+				"push 1",
+				"beq "+lTrue,
+				"push 0",
+				"b "+lEnd,
+				lTrue+":",
+				"push 1",
+				lEnd+":"
+		);
+	}
+
+	@Override
+	public String visitNode(NotNode n) {
+	  if (print) printNode(n);
+	  String lTrue = freshLabel();
+	  String lEnd = freshLabel();
+	  return nlJoin(
+			  visit(n.exp),
+			  "push 0",
+			  "beq "+lTrue,
+			  "push 0",
+			  "b "+lEnd,
+			  lTrue+":",
+			  "push 1",
+			  lEnd+":"
+	  );
+	}
+
+	@Override
 	public String visitNode(TimesNode n) {
 		if (print) printNode(n);
 		return nlJoin(
@@ -124,12 +215,32 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 	}
 
 	@Override
+	public String visitNode(DivNode n) {
+		if (print) printNode(n);
+		return nlJoin(
+				visit(n.left),
+				visit(n.right),
+				"div"
+		);
+	}
+
+	@Override
 	public String visitNode(PlusNode n) {
 		if (print) printNode(n);
 		return nlJoin(
 			visit(n.left),
 			visit(n.right),
 			"add"				
+		);
+	}
+
+	@Override
+	public String visitNode(MinusNode n) {
+		if (print) printNode(n);
+		return nlJoin(
+				visit(n.left),
+				visit(n.right),
+				"sub"
 		);
 	}
 
