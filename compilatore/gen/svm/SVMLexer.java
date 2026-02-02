@@ -1,4 +1,4 @@
-// Generated from C:/Users/Utente/Desktop/progetto-lcmc/compilatore/src/svm/SVM.g4 by ANTLR 4.13.2
+// Generated from /Users/mattia/Desktop/Università/Magistrale/LiCoMo/progetto-lcmc/compilatore/src/svm/SVM.g4 by ANTLR 4.13.2
 package svm;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.CharStream;
