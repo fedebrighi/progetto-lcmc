@@ -250,10 +250,13 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 		if (print) printVarAndProdName(c);
 		String classId = c.ID(0).getText();
 		int firstFieldIndex = (c.EXTENDS() != null ) ? 2 : 1;
+
 		List<FieldNode> fields = new ArrayList<>();
-        FieldNode f1 = new FieldNode(c.ID(firstFieldIndex).getText(), (TypeNode) visit(c.type(0)));
-        f1.setLine(c.ID(firstFieldIndex).getSymbol().getLine());
-        fields.add(f1);
+		for (int i = 0; i< c.type().size(); i++){
+			FieldNode f = new FieldNode(c.ID(firstFieldIndex + i).getText(), (TypeNode) visit(c.type(i)));
+			f.setLine(c.ID(firstFieldIndex + i).getSymbol().getLine());
+			fields.add(f);
+		}
 
 		List<MethodNode> methods = new ArrayList<>();
 		for (MethdecContext m : c.methdec()) {

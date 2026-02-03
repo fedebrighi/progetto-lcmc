@@ -206,12 +206,6 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 	@Override
 	public Void visitNode(IdNode n) {
 		if (print) printNode(n);
-        for (int i = 0; i < symTable.size(); i++){
-            Map<String, STentry> hm = symTable.get(i);
-            for (String id : hm.keySet()) {
-                System.out.println(id);
-            }
-        }
 		STentry entry = stLookup(n.id);
 		if (entry == null) {
 			System.out.println("Var or Par id " + n.id + " at line "+ n.getLine() + " not declared");
@@ -355,7 +349,6 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
     @Override
     public Void visitNode(NewNode n) {
         if (print) printNode(n);
-        System.out.println(classTable.entrySet());
         if(classTable.get(n.id) == null) {
             System.out.println("Class id " + n.id + " at line "+ n.getLine() + " not declared");
             stErrors++;
@@ -369,6 +362,12 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
         if (print) printNode(n);
         return null;
     }
+
+	@Override
+	public Void visitNode(EmptyNode n) {
+		if (print) printNode(n);
+		return null;
+	}
 
     @Override
     public Void visitNode(EmptyTypeNode n) {
