@@ -1,5 +1,6 @@
 package compiler;
 
+import java.sql.SQLOutput;
 import java.util.*;
 import compiler.AST.*;
 import compiler.exc.*;
@@ -205,6 +206,12 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 	@Override
 	public Void visitNode(IdNode n) {
 		if (print) printNode(n);
+        for (int i = 0; i < symTable.size(); i++){
+            Map<String, STentry> hm = symTable.get(i);
+            for (String id : hm.keySet()) {
+                System.out.println(id);
+            }
+        }
 		STentry entry = stLookup(n.id);
 		if (entry == null) {
 			System.out.println("Var or Par id " + n.id + " at line "+ n.getLine() + " not declared");
@@ -231,9 +238,9 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
     @Override
     public Void visitNode(ClassNode n){
         if (print) printNode(n);
-        Map<String, STentry> globalLevel = symTable.get(nestingLevel);
+        Map<String, STentry> globalLevel = symTable.get(0);
         ClassTypeNode ctn = new ClassTypeNode(new ArrayList<>(), new ArrayList<>());
-        STentry classEntry = new STentry(nestingLevel, ctn,  decOffset--);
+        STentry classEntry = new STentry(nestingLevel, ctn,  classOffset--);
         if(globalLevel.put(n.id,  classEntry) != null) {
             System.out.println("Class id " + n.id + " at line "+ n.getLine() +" already declared");
             stErrors++;
@@ -241,11 +248,12 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
         Map<String, STentry> vt = new HashMap<>();
         classTable.put(n.id, vt);
 
+
         nestingLevel++;
         symTable.add(vt);
 
-        int prevFieldOffest = fieldOffset;
         fieldOffset = -1;
+        int prevFieldOffest = fieldOffset;
         for(FieldNode f : n.fields) {
             if (classTable.get(n.id).put(f.id, new STentry(nestingLevel,f.getType(),fieldOffset)) != null) {
                 System.out.println("Field id " + f.id + " at line "+ f.getLine() +" already declared");
@@ -253,14 +261,29 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
             }
             f.offset = fieldOffset;
             int pos = -fieldOffset - 1;
+            while (ctn.allFields.size() <= pos) {
+                ctn.allFields.add(null);
+            }
             ctn.allFields.set(pos ,f.getType());
             fieldOffset--;
         }
-        int prevMethodOffest = methodOffset;
         methodOffset = 0;
+        int prevMethodOffest = methodOffset;
         for(MethodNode m : n.methods) {
             visit(m);
-            //aggiorna allMethods
+            STentry mEntry = symTable.get(nestingLevel).get(m.id);
+            if (mEntry != null) {
+                if (mEntry.type instanceof ArrowTypeNode atn) {
+                    while (ctn.allMethods.size() <= m.offset) {
+                        ctn.allMethods.add(null);
+                    }
+                    ctn.allMethods.set(m.offset, atn);
+                } else {
+                    System.out.println("Method id " + m.id + " at line " + m.getLine()
+                            + " has non-function type in symbol table");
+                    stErrors++;
+                }
+            }
         }
         symTable.remove(nestingLevel--);
         fieldOffset = prevFieldOffest;
@@ -269,23 +292,23 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
         return null;
     }
 
-    /*@Override
+    @Override
     public Void visitNode(MethodNode n) {
         if (print) printNode(n);
         Map<String, STentry> hm = symTable.get(nestingLevel);
         List<TypeNode> parTypes = new ArrayList<>();
         for (ParNode par : n.parlist) parTypes.add(par.getType());
-        STentry entry = new STentry(nestingLevel, new ArrowTypeNode(parTypes,n.retType),decOffset--);
-        //inserimento di ID nella symtable
+        ArrowTypeNode methodType = new ArrowTypeNode(parTypes,n.retType);
+        STentry entry = new STentry(nestingLevel, methodType,methodOffset);
         if (hm.put(n.id, entry) != null) {
-            System.out.println("Fun id " + n.id + " at line "+ n.getLine() +" already declared");
+            System.out.println("Method id " + n.id + " at line "+ n.getLine() +" already declared");
             stErrors++;
         }
-        //creare una nuova hashmap per la symTable
+        n.offset = methodOffset++;
         nestingLevel++;
         Map<String, STentry> hmn = new HashMap<>();
         symTable.add(hmn);
-        int prevNLDecOffset=decOffset; // stores counter for offset of declarations at previous nesting level
+        int prevNLDecOffset=decOffset;
         decOffset=-2;
 
         int parOffset=1;
@@ -296,11 +319,60 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
             }
         for (Node dec : n.declist) visit(dec);
         visit(n.exp);
-        //rimuovere la hashmap corrente poiche' esco dallo scope
         symTable.remove(nestingLevel--);
-        decOffset=prevNLDecOffset; // restores counter for offset of declarations at previous nesting level
+        decOffset=prevNLDecOffset;
         return null;
     }
-    */
 
+    @Override
+    public Void visitNode(ClassCallNode n) {
+        if (print) printNode(n);
+        STentry objectEntry = stLookup(n.objectId);
+        if (objectEntry == null) {
+            System.out.println("Obj id " + n.objectId + " at line "+ n.getLine() + " not declared");
+            stErrors++;
+        } else {
+            n.entry = objectEntry;
+            n.nl = nestingLevel;
+        }
+        if(objectEntry.type instanceof RefTypeNode rtn) {
+            STentry methodEntry = classTable.get(rtn.id).get(n.methodId);
+            if (methodEntry == null) {
+                System.out.println("Method id " + n.methodId + " at line "+ n.getLine() + " not declared");
+                stErrors++;
+            } else {
+                n.methodEntry = methodEntry;
+                n.nl = nestingLevel;
+            }
+        } else {
+            System.out.println("Type id " + n.objectId + " at line "+ n.getLine() + " not declared");
+            stErrors++;
+        }
+
+        return null;
+    }
+
+    @Override
+    public Void visitNode(NewNode n) {
+        if (print) printNode(n);
+        System.out.println(classTable.entrySet());
+        if(classTable.get(n.id) == null) {
+            System.out.println("Class id " + n.id + " at line "+ n.getLine() + " not declared");
+            stErrors++;
+        }
+        n.entry = symTable.get(0).get(n.id);
+        return null;
+    }
+
+    @Override
+    public Void visitNode(RefTypeNode n) {
+        if (print) printNode(n);
+        return null;
+    }
+
+    @Override
+    public Void visitNode(EmptyTypeNode n) {
+        if (print) printNode(n);
+        return null;
+    }
 }

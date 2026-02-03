@@ -4,5 +4,7 @@ let
   }
 
   var x:A = new A(5, true);
+  var y:A = null;
 in
   print(x.m());
+;

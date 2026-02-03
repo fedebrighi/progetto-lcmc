@@ -48,6 +48,7 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 	public Node visitLetInProg(LetInProgContext c) {
 		if (print) printVarAndProdName(c);
 		List<DecNode> declist = new ArrayList<>();
+        for (CldecContext cl : c.cldec()) declist.add((DecNode) visit(cl));
 		for (DecContext dec : c.dec()) declist.add((DecNode) visit(dec));
 		return new ProgLetInNode(declist, visit(c.exp()));
 	}
@@ -250,13 +251,10 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 		String classId = c.ID(0).getText();
 		int firstFieldIndex = (c.EXTENDS() != null ) ? 2 : 1;
 		List<FieldNode> fields = new ArrayList<>();
-		int typeIndex = 0;
-		for (int i = firstFieldIndex; i < c.ID().size(); i++) {
-			FieldNode f = new FieldNode(c.ID(i).getText(), (TypeNode) visit(c.type(typeIndex)));
-			f.setLine(c.ID(i).getSymbol().getLine());
-			fields.add(f);
-			typeIndex++;
-		}
+        FieldNode f1 = new FieldNode(c.ID(firstFieldIndex).getText(), (TypeNode) visit(c.type(0)));
+        f1.setLine(c.ID(firstFieldIndex).getSymbol().getLine());
+        fields.add(f1);
+
 		List<MethodNode> methods = new ArrayList<>();
 		for (MethdecContext m : c.methdec()) {
 			methods.add((MethodNode) visit(m));
