@@ -7,4 +7,3 @@ let
   var y:A = null;
 in
   print(x.m());
-;
