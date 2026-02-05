@@ -35,7 +35,7 @@ shp
 push -1
 lfp
 lfp
-push -2
+push -3
 add
 lw
 stm

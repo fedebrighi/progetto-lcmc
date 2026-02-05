@@ -1,0 +1,10 @@
+let
+  class A (a:int) {
+    fun getA:int() a;
+  }
+
+  class B extends A (c:int, c:bool) {
+    fun dummy:int() 0;
+  }
+in
+  0;

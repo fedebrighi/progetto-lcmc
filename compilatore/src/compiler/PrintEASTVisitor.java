@@ -201,7 +201,8 @@ public class PrintEASTVisitor extends BaseEASTVisitor<Void,VoidException> {
 
     @Override
     public Void visitNode(ClassNode n) {
-        printNode(n, n.id);
+        String info = n.id + (n.superId != null ? " extends " + n.superId : "");
+        printNode(n, info);
         for (FieldNode field : n.fields) visit(field);
         for (MethodNode method : n.methods) visit(method);
         return null;
