@@ -210,7 +210,7 @@ public class PrintEASTVisitor extends BaseEASTVisitor<Void,VoidException> {
 
     @Override
     public Void visitNode(FieldNode node) {
-        printNode(node, node.id);
+        printNode(node, node.id + " offset " + node.offset);
         visit(node.getType());
         return null;
     }
