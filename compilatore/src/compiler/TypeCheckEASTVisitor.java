@@ -263,12 +263,29 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
     @Override
     public TypeNode visitNode(ClassNode n) throws TypeException {
         if (print) printNode(n,n.id);
+        if(n.superId != null){
+            superType.put(n.id,n.superId);
+        }
         for(Node method : n.methods){
             try {
                 visit(method);
             } catch (IncomplException e) {
             } catch (TypeException e) {
                 System.out.println("Type checking error in a method: " + e.text);
+            }
+        }
+        if(n.superId != null && n.superEntry != null) {
+            if (n.entry.type instanceof ClassTypeNode ctn && n.superEntry.type instanceof ClassTypeNode superCtn) {
+                for (int i = 0; i < superCtn.allFields.size(); i++) {
+                    if (!isSubtype(ctn.allFields.get(i), superCtn.allFields.get(i))) {
+                        throw new TypeException("Wrong type for overridden field " + n.id, n.getLine());
+                    }
+                }
+                for (int i = 0; i < superCtn.allMethods.size(); i++) {
+                    if (!isSubtype(ctn.allMethods.get(i), superCtn.allMethods.get(i))) {
+                        throw new TypeException("Wrong type for overridden method " + n.id, n.getLine());
+                    }
+                }
             }
         }
         return null;

@@ -12,8 +12,10 @@ import static compiler.lib.FOOLlib.*;
 
 public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidException> {
 
-  CodeGenerationASTVisitor() {}
-  CodeGenerationASTVisitor(boolean debug) {super(false,debug);} //enables print for debugging
+    private List<List<String>> dispatchTables = new ArrayList<>();
+
+    CodeGenerationASTVisitor() {}
+    CodeGenerationASTVisitor(boolean debug) {super(false,debug);} //enables print for debugging
 
 	@Override
 	public String visitNode(ProgLetInNode n) {
@@ -21,8 +23,8 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 		String declCode = null;
 		for (Node dec : n.declist) declCode=nlJoin(declCode,visit(dec));
 		return nlJoin(
-			"push 0",	
-			declCode, // generate code for declarations (allocation)			
+			"push 0",
+			declCode, // generate code for declarations (allocation)
 			visit(n.exp),
 			"halt",
 			getCode()
@@ -66,7 +68,7 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 				"js"  // jump to to popped address
 			)
 		);
-		return "push "+funl;		
+		return "push "+funl;
 	}
 
 	@Override
@@ -88,7 +90,7 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 	public String visitNode(IfNode n) {
 		if (print) printNode(n);
 	 	String l1 = freshLabel();
-	 	String l2 = freshLabel();		
+	 	String l2 = freshLabel();
 		return nlJoin(
 			visit(n.cond),
 			"push 1",
@@ -216,7 +218,7 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 			visit(n.left),
 			visit(n.right),
 			"mult"
-		);	
+		);
 	}
 
 	@Override
@@ -235,7 +237,7 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 		return nlJoin(
 			visit(n.left),
 			visit(n.right),
-			"add"				
+			"add"
 		);
 	}
 
@@ -345,6 +347,12 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
     public String visitNode(ClassNode n){
         if (print) printNode(n, n.id);
         List<String> dispatchTable = new ArrayList<>();
+        if(n.superId!=null){
+            List<String> superTable = dispatchTables.get(-n.superEntry.offset-2);
+            for(String s : superTable){
+                dispatchTable.add(s);
+            }
+        }
         for (int i = 0; i < n.methods.size() ; i++) {
             visit(n.methods.get(i));
             String nodeLabel = n.methods.get(i).label;
@@ -352,6 +360,7 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
             while (dispatchTable.size() <= nodeOffset) dispatchTable.add(null);
             dispatchTable.set(nodeOffset, nodeLabel);
         }
+        dispatchTables.add(dispatchTable);
         String returnCode = "lhp";
         for (int i = 0; i < dispatchTable.size(); i++) {
             if (dispatchTable.get(i) == null) throw new RuntimeException("Dispatch table hole in class " + n.id);

@@ -236,6 +236,9 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
         ClassTypeNode superCtn = null;
         if(n.superId != null){
             if (globalLevel.get(n.superId).type instanceof ClassTypeNode){
+                if(classTable.get(n.superId) != null) {
+                    n.superEntry = new STentry(globalLevel.get(n.superId).nl, globalLevel.get(n.superId).type, globalLevel.get(n.superId).offset);
+                }
                 superCtn = (ClassTypeNode) globalLevel.get(n.superId).type;
                 ctn = new ClassTypeNode(new ArrayList<>(superCtn.allFields), new ArrayList<>(superCtn.allMethods));
             }
@@ -243,6 +246,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
             ctn = new ClassTypeNode(new ArrayList<>(), new ArrayList<>());
         }
         STentry classEntry = new STentry(nestingLevel, ctn,  decOffset--); //-2 perchè a 0 abbiamo Control Link e a -1 il return address
+        n.entry = classEntry;
         if(globalLevel.put(n.id,  classEntry) != null) {
             System.out.println("Class id " + n.id + " at line "+ n.getLine() +" already declared");
             stErrors++;
