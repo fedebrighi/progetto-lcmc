@@ -10,6 +10,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 
 	private List<Map<String, STentry>> symTable = new ArrayList<>();
 	private Map<String, Map<String, STentry>> classTable = new HashMap<>();
+    private HashSet<String> classSet;
     private int fieldOffset;
     private int methodOffset;
     private int nestingLevel=0; // current nesting level
@@ -231,6 +232,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
     @Override
     public Void visitNode(ClassNode n){
         if (print) printNode(n);
+        classSet = new HashSet<>();
         Map<String, STentry> globalLevel = symTable.get(0);
         ClassTypeNode ctn = null;
         ClassTypeNode superCtn = null;
@@ -270,43 +272,52 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
         int prevFieldOffest = fieldOffset;
         int prevMethodOffest = methodOffset;
 		for (FieldNode f : n.fields) {
+            if(classSet.contains(f.id)) {
+                System.out.println("Field " +  f.id + " at line "+ n.getLine() +" already declared");
+                stErrors++;
+            } else {
+                classSet.add(f.id);
+                STentry old = vt.get(f.id);
+                int off;
 
-			STentry old = vt.get(f.id);
-			int off;
+                if (old != null) {
+                    if (old.type instanceof ArrowTypeNode) {
+                        System.out.println("Field id " + f.id + " at line " + f.getLine() + " overrides a method");
+                        stErrors++;
+                        continue;
+                    }
+                    off = old.offset;
+                } else {
+                    off = fieldOffset--;
+                }
+                vt.put(f.id, new STentry(nestingLevel, f.getType(), off));
+                f.offset = off;
 
-			if (old != null) { // overriding (anche doppia dichiarazione nella stessa classe, senza ottimizzazioni)
-				if (old.type instanceof ArrowTypeNode) {
-					System.out.println("Field id " + f.id + " at line " + f.getLine() + " overrides a method");
-					stErrors++;
-					continue;
-				}
-				off = old.offset;          // preserva offset
-			} else {
-				off = fieldOffset--;       // nuovo campo -> consuma offset
-			}
-
-			// sostituisci sempre con il tipo nuovo
-			vt.put(f.id, new STentry(nestingLevel, f.getType(), off));
-			f.offset = off;
-
-			int pos = -off - 1;
-			while (ctn.allFields.size() <= pos) ctn.allFields.add(null);
-			ctn.allFields.set(pos, f.getType());
+                int pos = -off - 1;
+                while (ctn.allFields.size() <= pos) ctn.allFields.add(null);
+                ctn.allFields.set(pos, f.getType());
+            }
 		}
 
 		for(MethodNode m : n.methods) {
-            visit(m);
-            STentry mEntry = symTable.get(nestingLevel).get(m.id);
-            if (mEntry != null) {
-                if (mEntry.type instanceof ArrowTypeNode atn) {
-                    while (ctn.allMethods.size() <= m.offset) {
-                        ctn.allMethods.add(null);
+            if(classSet.contains(m.id)) {
+                System.out.println("Method " +  m.id + " at line "+ n.getLine() +" already declared");
+                stErrors++;
+            } else {
+                classSet.add(m.id);
+                visit(m);
+                STentry mEntry = symTable.get(nestingLevel).get(m.id);
+                if (mEntry != null) {
+                    if (mEntry.type instanceof ArrowTypeNode atn) {
+                        while (ctn.allMethods.size() <= m.offset) {
+                            ctn.allMethods.add(null);
+                        }
+                        ctn.allMethods.set(m.offset, atn);
+                    } else {
+                        System.out.println("Method id " + m.id + " at line " + m.getLine()
+                                + " has non-function type in symbol table");
+                        stErrors++;
                     }
-                    ctn.allMethods.set(m.offset, atn);
-                } else {
-                    System.out.println("Method id " + m.id + " at line " + m.getLine()
-                            + " has non-function type in symbol table");
-                    stErrors++;
                 }
             }
         }

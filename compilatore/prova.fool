@@ -1,9 +1,14 @@
 let
-  class A(a:int, b:bool) {
-    fun m:int() let var t:int = a; in t;
+  class A (x:int) {
+    fun get:int () x;
   }
 
-  var x:A = new A(5, true);
-  var y:A = null;
+  class B (y:int) {
+    fun get:int () y;
+  }
+
+  fun useA:int (a:A) a.get();
+
+  var b:B = new B(99);
 in
-  print(x.m());
+  print(useA(b));
