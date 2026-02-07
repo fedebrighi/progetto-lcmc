@@ -1,10 +1,5 @@
-let
-  class A (a:int) {
-    fun getA:int() a;
-  }
-
-  class B extends A (c:int, c:bool) {
-    fun dummy:int() 0;
-  }
+let 
+  var x:int = 1+5;
+  var b:bool = true;
 in
-  0;
+  print (if (b) then { x+1 } else { x+2 });

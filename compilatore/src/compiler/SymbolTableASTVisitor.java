@@ -303,6 +303,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
             if(classSet.contains(m.id)) {
                 System.out.println("Method " +  m.id + " at line "+ n.getLine() +" already declared");
                 stErrors++;
+                continue;
             } else {
                 classSet.add(m.id);
                 visit(m);

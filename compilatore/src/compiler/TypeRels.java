@@ -25,6 +25,31 @@ public class TypeRels {
             ((a instanceof BoolTypeNode) && (b instanceof IntTypeNode));
     }
 
+    public static TypeNode lowestCommonAncestor(TypeNode a, TypeNode b) {
+        if(a instanceof EmptyTypeNode){
+            return b;
+        } else if(b instanceof EmptyTypeNode){
+            return a;
+        }
+        if(a instanceof RefTypeNode rtnA && b instanceof RefTypeNode rtnB){
+            String parentClass = superType.get(rtnA.id);
+            while(parentClass != null){
+                RefTypeNode rtf = new RefTypeNode(parentClass);
+                if(isSubtype(b, rtf)){
+                    return rtf;
+                }
+                parentClass = superType.get(parentClass);
+            }
+            return null;
+        }
+        if(a instanceof IntTypeNode || b instanceof IntTypeNode ){
+            return new IntTypeNode();
+        } else if (a instanceof BoolTypeNode && b instanceof BoolTypeNode) {
+            return new BoolTypeNode();
+        }
+        return null;
+    }
+
     private static boolean checkRefType(TypeNode a, TypeNode b) {
         if (a instanceof RefTypeNode && b instanceof RefTypeNode) {
             RefTypeNode rtn = (RefTypeNode) a;

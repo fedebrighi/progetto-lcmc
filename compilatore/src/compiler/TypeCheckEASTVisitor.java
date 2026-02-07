@@ -77,9 +77,13 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 			throw new TypeException("Non boolean condition in if",n.getLine());
 		TypeNode t = visit(n.th);
 		TypeNode e = visit(n.el);
-		if (isSubtype(t, e)) return e;
-		if (isSubtype(e, t)) return t;
-		throw new TypeException("Incompatible types in then-else branches",n.getLine());
+        if(isSubtype(t, e)) return e;
+        if(isSubtype(e, t)) return t;
+        if(lowestCommonAncestor(t,e)==null){
+            throw new TypeException("No lowest common ancestor was found",n.getLine());
+        } else {
+            return lowestCommonAncestor(t,e);
+        }
 	}
 
 	@Override
@@ -275,15 +279,23 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
             }
         }
         if(n.superId != null && n.superEntry != null) {
-            if (n.entry.type instanceof ClassTypeNode ctn && n.superEntry.type instanceof ClassTypeNode superCtn) {
-                for (int i = 0; i < superCtn.allFields.size(); i++) {
-                    if (!isSubtype(ctn.allFields.get(i), superCtn.allFields.get(i))) {
-                        throw new TypeException("Wrong type for overridden field " + n.id, n.getLine());
+            int posField = -1;
+            int posMethod = -1;
+            if (n.entry.type instanceof ClassTypeNode ctn && n.superEntry.type instanceof ClassTypeNode parentCT) {
+                for (FieldNode f : n.fields) {
+                    posField = -f.offset-1;
+                    if (posField >= 0 && posField < parentCT.allFields.size()) {
+                        if (!isSubtype(f.getType(), parentCT.allFields.get(posField))) {
+                            throw new TypeException("Wrong type for overridden field " + n.id, n.getLine());
+                        }
                     }
                 }
-                for (int i = 0; i < superCtn.allMethods.size(); i++) {
-                    if (!isSubtype(ctn.allMethods.get(i), superCtn.allMethods.get(i))) {
-                        throw new TypeException("Wrong type for overridden method " + n.id, n.getLine());
+                for (MethodNode m : n.methods) {
+                    posMethod = m.offset;
+                    if (posMethod < parentCT.allMethods.size()) {
+                        if (!isSubtype(ctn.allMethods.get(posMethod), parentCT.allMethods.get(posMethod))) {
+                            throw new TypeException("Wrong type for overridden method " + n.id, n.getLine());
+                        }
                     }
                 }
             }
