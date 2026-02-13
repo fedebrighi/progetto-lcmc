@@ -14,7 +14,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
     private int fieldOffset;
     private int methodOffset;
     private int nestingLevel=0; // current nesting level
-	private int decOffset=-2; // counter for offset of local declarations at current nesting level
+	private int decOffset=-2; // counter for offset of local declarations at current nesting level (Offset 0 -> Control Link, Offset -1 -> Return Address)
     int stErrors=0;
 
 	SymbolTableASTVisitor() {}

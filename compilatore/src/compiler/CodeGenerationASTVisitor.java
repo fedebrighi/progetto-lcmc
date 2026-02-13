@@ -65,7 +65,7 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 				"sfp", // set $fp to popped value (Control Link)
 				"ltm", // load $tm value (function result)
 				"lra", // load $ra value
-				"js"  // jump to to popped address
+				"js"  // jump to popped address
 			)
 		);
 		return "push "+funl;
@@ -257,7 +257,7 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
         String argCode = null, getAR = null;
         for (int i=n.arglist.size()-1;i>=0;i--) argCode=nlJoin(argCode,visit(n.arglist.get(i)));
         for (int i = 0;i<n.nl-n.entry.nl;i++) getAR=nlJoin(getAR,"lw");
-        if (n.entry.offset < 0){
+        if (n.entry.offset < 0){ // Caso di funzione locale
             return nlJoin(
                     "lfp", // load Control Link (pointer to frame of function "id" caller)
                     argCode, // generate code for argument expressions in reversed order
@@ -270,7 +270,7 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
                     "lw", // load address of "id" function
                     "js"  // jump to popped address (saving address of subsequent instruction in $ra)
             );
-        } else {
+        } else { // Caso di funzione globale
             return nlJoin(
                     "lfp", // load Control Link (pointer to frame of function "id" caller)
                     argCode, // generate code for argument expressions in reversed order
@@ -293,8 +293,7 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 		String getAR = null;
 		for (int i = 0;i<n.nl-n.entry.nl;i++) getAR=nlJoin(getAR,"lw");
 		return nlJoin(
-			"lfp", getAR, // retrieve address of frame containing "id" declaration
-			              // by following the static chain (of Access Links)
+			"lfp", getAR, // retrieve address of frame containing "id" declaration by following the static chain (of Access Links)
 			"push "+n.entry.offset, "add", // compute address of "id" declaration
 			"lw" // load value of "id" variable
 		);
@@ -337,7 +336,7 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
                         "sfp", // set $fp to popped value (Control Link)
                         "ltm", // load $tm value (function result)
                         "lra", // load $ra value
-                        "js"  // jump to to popped address
+                        "js"  // jump to popped address
                 )
         );
         return null;

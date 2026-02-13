@@ -15,14 +15,13 @@ public class TypeRels {
 
         if (a == null || b == null) return false;
 
-        // prima i casi "speciali" (per evitare che RefTypeNode passi solo perché è RefTypeNode)
         if ((a instanceof EmptyTypeNode) && (b instanceof RefTypeNode)) return true;
+
         if (a instanceof RefTypeNode && b instanceof RefTypeNode) return checkRefType(a, b);
+
         if (a instanceof ArrowTypeNode && b instanceof ArrowTypeNode) return checkArrowType(a, b);
 
-        // poi i casi base come nella tua struttura
-        return a.getClass().equals(b.getClass()) ||
-            ((a instanceof BoolTypeNode) && (b instanceof IntTypeNode));
+        return a.getClass().equals(b.getClass()) || ((a instanceof BoolTypeNode) && (b instanceof IntTypeNode));
     }
 
     public static TypeNode lowestCommonAncestor(TypeNode a, TypeNode b) {
@@ -69,6 +68,7 @@ public class TypeRels {
         }
     }
 
+    // Tipo dei parametri controvariante, mentre tipo di output covariante
     private static boolean checkArrowType(TypeNode a, TypeNode b) {
         if(a instanceof ArrowTypeNode && b instanceof ArrowTypeNode) {
             ArrowTypeNode artnA = (ArrowTypeNode) a;
